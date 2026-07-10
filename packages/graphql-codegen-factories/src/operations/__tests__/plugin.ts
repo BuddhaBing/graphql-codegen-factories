@@ -617,4 +617,33 @@ describe("plugin", () => {
     );
     expect(output).toMatchSnapshot();
   });
+
+  it("should support selecting the __typename meta-field", async () => {
+    const schema = buildSchema(/* GraphQL */ `
+      type User {
+        id: ID!
+        username: String!
+      }
+
+      type Query {
+        user: User!
+      }
+    `);
+    const ast = parse(/* GraphQL */ `
+      query GetUser {
+        user {
+          __typename
+          id
+          username
+        }
+      }
+    `);
+
+    const output = await plugin(
+      schema,
+      [{ location: "GetUser.graphql", document: ast }],
+      { schemaFactoriesPath: "./factories" }
+    );
+    expect(output).toMatchSnapshot();
+  });
 });
