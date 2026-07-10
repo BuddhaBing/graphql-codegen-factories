@@ -16,6 +16,7 @@ import {
   Kind,
   OperationDefinitionNode,
   SelectionNode,
+  TypeNameMetaFieldDef,
 } from "graphql";
 import {
   FactoriesBaseVisitor,
@@ -197,9 +198,14 @@ export class FactoriesOperationsVisitor extends FactoriesBaseVisitor<
     }
 
     if (selection.kind === Kind.FIELD) {
-      const type = (parent as GraphQLObjectType).getFields()[
-        selection.name.value
-      ].type;
+      // `__typename` is a meta-field defined by the spec and is not present in
+      // getFields(); resolve it via graphql's TypeNameMetaFieldDef so selecting
+      // it (e.g. in a fragment) doesn't crash.
+      const field =
+        selection.name.value === TypeNameMetaFieldDef.name
+          ? TypeNameMetaFieldDef
+          : (parent as GraphQLObjectType).getFields()[selection.name.value];
+      const type = field.type;
       return [
         {
           name: selection.name.value,
