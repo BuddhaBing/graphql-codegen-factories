@@ -475,6 +475,34 @@ export function createGetMeQueryMock_me_followers(props: Partial<NonNullable<Non
 }
 `;
 
+exports[`plugin should support selecting the __typename meta-field 1`] = `
+Object {
+  "content": "export function createGetUserQueryMock(props: Partial<GetUserQuery> = {}): GetUserQuery {
+  return {
+    __typename: \\"Query\\",
+    user: createGetUserQueryMock_user({}),
+    ...props,
+  };
+}
+
+export function createGetUserQueryMock_user(props: Partial<GetUserQuery[\\"user\\"]> = {}): GetUserQuery[\\"user\\"] {
+  const user = schemaFactories.createUserMock({
+    id: props.id,
+    username: props.username,
+  });
+  return {
+    __typename: \\"User\\",
+    id: user.id,
+    username: user.username,
+    ...props,
+  };
+}",
+  "prepend": Array [
+    "import * as schemaFactories from \\"./factories\\";",
+  ],
+}
+`;
+
 exports[`plugin should support unions 1`] = `
 Object {
   "content": "export function createGetMediasQueryMock(props: Partial<GetMediasQuery> = {}): GetMediasQuery {

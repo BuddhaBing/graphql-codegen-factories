@@ -646,4 +646,63 @@ describe("plugin", () => {
     );
     expect(output).toMatchSnapshot();
   });
+
+  it("should throw a descriptive error when selecting a field that does not exist on the type", async () => {
+    const schema = buildSchema(/* GraphQL */ `
+      type User {
+        id: ID!
+      }
+
+      type Query {
+        user: User!
+      }
+    `);
+    const ast = parse(/* GraphQL */ `
+      query GetUser {
+        user {
+          id
+          username
+        }
+      }
+    `);
+
+    expect(() =>
+      plugin(schema, [{ location: "GetUser.graphql", document: ast }], {
+        schemaFactoriesPath: "./factories",
+      })
+    ).toThrow('Field "username" not found on type "User"');
+  });
+
+  it("should throw a descriptive error when selecting a field on a union without an inline fragment", async () => {
+    const schema = buildSchema(/* GraphQL */ `
+      type Image {
+        src: String!
+      }
+
+      type Video {
+        href: String!
+      }
+
+      union Media = Image | Video
+
+      type Query {
+        media: Media!
+      }
+    `);
+    const ast = parse(/* GraphQL */ `
+      query GetMedia {
+        media {
+          src
+        }
+      }
+    `);
+
+    expect(() =>
+      plugin(schema, [{ location: "GetMedia.graphql", document: ast }], {
+        schemaFactoriesPath: "./factories",
+      })
+    ).toThrow(
+      'Field "src" cannot be selected on union type "Media" without an inline fragment'
+    );
+  });
 });

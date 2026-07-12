@@ -198,13 +198,27 @@ export class FactoriesOperationsVisitor extends FactoriesBaseVisitor<
     }
 
     if (selection.kind === Kind.FIELD) {
-      // `__typename` is a meta-field defined by the spec and is not present in
-      // getFields(); resolve it via graphql's TypeNameMetaFieldDef so selecting
-      // it (e.g. in a fragment) doesn't crash.
-      const field =
-        selection.name.value === TypeNameMetaFieldDef.name
-          ? TypeNameMetaFieldDef
-          : (parent as GraphQLObjectType).getFields()[selection.name.value];
+      if (selection.name.value === TypeNameMetaFieldDef.name) {
+        // `__typename` is not present in getFields(); and since it's always included,
+        // we can safely ignore it here
+        return [];
+      }
+
+      if (isUnionType(parent)) {
+        // Union types don't expose fields directly (getFields() doesn't exist on them)
+        throw new Error(
+          `Field "${selection.name.value}" cannot be selected on union type "${parent.name}" without an inline fragment`
+        );
+      }
+
+      const field = parent.getFields()[selection.name.value];
+
+      if (field == null) {
+        throw new Error(
+          `Field "${selection.name.value}" not found on type "${parent.name}"`
+        );
+      }
+
       const type = field.type;
       return [
         {
